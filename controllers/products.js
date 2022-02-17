@@ -1,9 +1,9 @@
 //importing schema_models
-const product = require('../models/product')
+const Product = require('../models/product')
 
 //function for testing-Data
 const getAllProductsStatic = async (req, res) => {
- const products = await product.find().sort('-name price')
+ const products = await Product.find().sort('-name price')
  // throw new Error('testing async errors')
  res.status(200).json({
   products,
@@ -16,7 +16,8 @@ const getAllProducts = async (req, res) => {
  const {
   featured,
   company,
-  name
+  name,
+  sort
  } = req.query
  const queryObject = {}
 
@@ -35,9 +36,15 @@ const getAllProducts = async (req, res) => {
   };
  }
 
- console.log(queryObject)
+ let result = Product.find(queryObject);
+ if (sort) {
+  const sortList = sort.split(',').join(' ');
+  result = result.sort(sortList)
+ } else {
+  result = result.sort('createdAt')
+ }
 
- const products = await product.find(queryObject);
+ const products = await result
  res.status(200).json({
   products,
   nbHits: products.length
