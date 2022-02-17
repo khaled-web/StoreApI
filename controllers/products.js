@@ -3,7 +3,7 @@ const Product = require('../models/product')
 
 //function for testing-Data
 const getAllProductsStatic = async (req, res) => {
- const products = await Product.find().select('name price')
+ const products = await Product.find().sort('-price').select('name price').limit(10).skip(0)
  // throw new Error('testing async errors')
  res.status(200).json({
   products,
