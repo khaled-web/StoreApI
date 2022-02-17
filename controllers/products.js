@@ -3,13 +3,7 @@ const product = require('../models/product')
 
 //function for testing-Data
 const getAllProductsStatic = async (req, res) => {
- const search = 'ab';
- const products = await product.find({
-  name: {
-   $regex: search,
-   $options: 'i'
-  }
- })
+ const products = await product.find().sort('-name price')
  // throw new Error('testing async errors')
  res.status(200).json({
   products,
