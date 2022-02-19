@@ -3,11 +3,15 @@ const Product = require('../models/product')
 
 //function for testing-Data
 const getAllProductsStatic = async (req, res) => {
- const products = await Product.find().sort('-price').select('name price').limit(10).skip(0)
+ const products = await Product.find({
+  price: {
+   $gt: 30, // ${gt}...it's means biggest than
+  }
+ }).sort('price').select('name price')
  // throw new Error('testing async errors')
  res.status(200).json({
-  products,
-  nbHits: products.length // to present the No. of data
+  nbHits: products.length, // to present the No. of data
+  products
  })
 }
 
@@ -18,7 +22,8 @@ const getAllProducts = async (req, res) => {
   company,
   name,
   sort,
-  fields
+  fields,
+  numericFilters
  } = req.query
  const queryObject = {}
  //featured
@@ -36,6 +41,29 @@ const getAllProducts = async (req, res) => {
    $options: 'i'
   };
  }
+
+ //numericFilters
+ if (numericFilters) {
+  const operatorMap = {
+   '>': '$gt',
+   '>=': '$gte',
+   '=': '$eq',
+   '<': '$lt',
+   '<=': '$lte',
+  }
+  const regEx = /\b(<|>|>=|=|<|<=)\b/g
+  let filters = numericFilters.replace(regEx, (match) => `-${operatorMap[match]}-`)
+  const options = ['price', 'rating'];
+  filters = filters.split(',').forEach((item) => {
+   const [field, operator, value] = item.split('-')
+   if (options.includes(field)) {
+    queryObject[field] = {
+     [operator]: Number(value)
+    }
+   }
+  })
+ }
+ console.log(queryObject)
  //sort
  let result = Product.find(queryObject);
  if (sort) {
@@ -51,11 +79,16 @@ const getAllProducts = async (req, res) => {
   result = result.select(fieldsList);
  }
 
+ const page = Number(req.query.page) || 1;
+ const limit = Number(req.query.limit) || 10;
+ const skip = (page - 1) * limit;
+
+ result = result.skip(skip).limit(limit)
  const products = await result
 
  res.status(200).json({
+  nbHits: products.length,
   products,
-  nbHits: products.length
  })
 }
 
